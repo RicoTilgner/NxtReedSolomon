@@ -37,6 +37,7 @@ public final class GenericGF {
   public static final GenericGF DATA_MATRIX_FIELD_256 = new GenericGF(0x012D, 256, 1); // x^8 + x^5 + x^3 + x^2 + 1
   public static final GenericGF AZTEC_DATA_8 = DATA_MATRIX_FIELD_256;
   public static final GenericGF MAXICODE_FIELD_64 = AZTEC_DATA_6;
+  public static final GenericGF ITPP_32 = new GenericGF(0x45, 32, 1);
 
   private static final int INITIALIZATION_THRESHOLD = 0;
 
