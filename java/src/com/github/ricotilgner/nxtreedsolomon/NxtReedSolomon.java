@@ -9,7 +9,7 @@ import com.google.zxing.common.reedsolomon.ReedSolomonEncoder;
 import com.google.zxing.common.reedsolomon.ReedSolomonException;
 
 public class NxtReedSolomon {
-  private static final String charSet = "2345678abcdefghijkmnopqrstuvwxyz";
+  private static final String charSet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
   private static final BigInteger POW_2_64 = BigInteger.valueOf(2).pow(64);
   private static final int DATA_LENGTH = 13;
   private static final int RS_LENGTH = 4;
@@ -67,7 +67,7 @@ public class NxtReedSolomon {
     if (account.length() != MESSAGE_LENGTH) {
       throw new IllegalArgumentException("Account name has the wrong length.");
     }
-    if (!account.matches("^[1-7a-km-z]+$")) {
+    if (!account.matches("^[2-9A-HJ-NP-Z]+$")) {
       throw new IllegalArgumentException("Account name contains illegal characters.");
     }
     int[] accountBase32 = new int[MESSAGE_LENGTH];
