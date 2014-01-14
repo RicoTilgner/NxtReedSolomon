@@ -18,10 +18,10 @@ public class NxtReedSolomon {
   public static void main(String[] args) {
     BigInteger account = new BigInteger(args[0]);
     System.out.println(account.toString());
-    String encoded = encode(account);
+    String encoded = encode(account, Boolean.parseBoolean(args[1]));
     System.out.println("encoded: " + encoded);
     try {
-      System.out.println(decode(args[1]));
+      System.out.println(decode(args[2]));
     } catch (IllegalArgumentException e) {
       System.out.println(e.getMessage());
     } catch (CorrectionException e) {
@@ -29,7 +29,7 @@ public class NxtReedSolomon {
     }
   }
 
-  public static String encode(BigInteger account)
+  public static String encode(BigInteger account, boolean prefix)
       throws IllegalArgumentException {
     if (account.compareTo(POW_2_64) >= 0) {
       throw new IllegalArgumentException("Account number is bigger than 2^64.");
@@ -43,27 +43,41 @@ public class NxtReedSolomon {
           account.shiftRight(60 - 5 * i).and(BigInteger.valueOf(31)).intValue();
     }
     new ReedSolomonEncoder(GenericGF.ITPP_32).encode(accountBase32, RS_LENGTH);
-    return base32ToString(accountBase32);
+    return base32ToString(accountBase32, prefix);
   }
 
-  private static String base32ToString(int[] base32) {
-    StringBuffer output = new StringBuffer("NXT");
+  private static String base32ToString(int[] base32, boolean prefix) {
+    StringBuffer result = new StringBuffer();
+    if (prefix) {
+      result.append("NXT");
+    }
     for (int i = 0; i < base32.length; i++) {
       if (i % 5 == 2) {
-        output.append("-");
+        result.append("-");
       }
-      output.append(charSet.charAt(base32[i]));
+      result.append(charSet.charAt(base32[i]));
     }
-    return output.toString();
+    return result.toString();
   }
 
   public static BigInteger decode(String account)
       throws IllegalArgumentException, CorrectionException {
-    account = account.trim().replace("-", "");
-    if (!account.startsWith("NXT")) {
-      throw new IllegalArgumentException("Account is not an NXT account.");
+    account = account.trim().toUpperCase();
+    // old decimal format
+    if (account.matches("^[1-9][0-9]*$")) {
+      BigInteger result = new BigInteger(account);
+      if (result.compareTo(POW_2_64) >= 0) {
+        throw new IllegalArgumentException("Account is not an NXT account.");
+      }
+      return result;
     }
-    account = account.substring(3);
+    account = account.replace("-", "");
+    // the prefix is optional
+    boolean prefix = false;
+    if (account.startsWith("NXT")) {
+      account = account.substring(3);
+      prefix = true;
+    }
     if (account.length() != MESSAGE_LENGTH) {
       throw new IllegalArgumentException("Account name has the wrong length.");
     }
@@ -81,7 +95,7 @@ public class NxtReedSolomon {
       throw new IllegalArgumentException("Account does not exist.");
     }
     if (!Arrays.equals(inputAccountBase32, accountBase32)) {
-      throw new CorrectionException(base32ToString(accountBase32));
+      throw new CorrectionException(base32ToString(accountBase32, prefix));
     }
     BigInteger result = BigInteger.ZERO;
     for (int i = 0; i < DATA_LENGTH; i++) {
@@ -89,7 +103,7 @@ public class NxtReedSolomon {
           .and(BigInteger.valueOf(31)).shiftLeft(60 - 5 * i));
     }
     // If the input contained more errors than RS could handle, we can still make sure
-    // the 1 Bit we had to append while encoding are 0.
+    // the 1 Bit we had to append while encoding is 0.
     if (result.compareTo(POW_2_64) >= 0) {
       throw new IllegalArgumentException("Account does not exist.");
     }
